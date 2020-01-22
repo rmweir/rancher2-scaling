@@ -43,22 +43,26 @@ class Client:
         return self._timed_list_k8s("projects")
 
     def timed_list_rancher_clusters(self):
-        start = time.time()
         try:
-            resp = self.rancher_api_client().list_cluster(limit=-1)
+            a = self.rancher_api_client()
+            start1 = time.perf_counter()
+            resp = a.list_project_role_template_binding(limit=-1)
         except ApiError as e:
             print(e)
             return
-        return {"num_clusters": len(resp["data"]), "rancher_cluster_list_time": time.time() - start}
+        end = time.perf_counter() - start1
+        return {"num_clusters": len(resp["data"]), "rancher_cluster_list_time": end}
 
     def timed_list_rancher_projects_no_resp(self):
-        start = time.time()
         try:
-            resp = self.rancher_api_client().list_project(limit=-1)
+            a = self.rancher_api_client()
+            start = time.thread_time()
+            resp = a.list_project(limit=-1)
         except ApiError as e:
             print(e)
             return
-        return {"num_projects": len(resp["data"]), "rancher_project_list_time": time.time() - start}
+        end = time.thread_time() - start
+        return {"num_projects": len(resp["data"]), "rancher_project_list_time": end}
 
     def timed_crud_rancher_cluster(self):
         try:
@@ -101,8 +105,9 @@ class Client:
                 "type": "kontainerdriver"})
 
     def _timed_list_k8s(self, resource_plural):
+        k8s = k8s_api_client(self, "local")
         start = time.time()
-        resp = self.k8s_client.call_api(
+        resp = k8s.call_api(
             '/apis/{group}/{version}/{plural}',
             "GET",
             {
@@ -116,12 +121,12 @@ class Client:
             },
             auth_settings=['BearerToken'],
             _preload_content=True,
-            response_type='object'
-
+            response_type='object',
         )
+        elapsed = time.time() - start
         if resp[1] == 200:
             return {"num_k8s_" + resource_plural: len(resp[0].get("items", {})),
-                    "k8s_" + resource_plural[:-1] + "_list_time": time.time() - start}
+                    "k8s_" + resource_plural[:-1] + "_list_time": elapsed}
         else:
             return None
 
@@ -186,6 +191,7 @@ class Client:
             url=self.Auth.url,
             token=self.Auth.token,
             verify=False)
+            # headers={"Accept-Encoding": "gzip"})
 
 
 # should just add this to rancher client, exists in a
