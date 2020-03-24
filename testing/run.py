@@ -27,10 +27,10 @@ def set_rancher_token_url():
 
 
 def run():
-    setup()
-    set_rancher_token_url()
-    start()
-    testbench.run()
+    # setup()
+    # set_rancher_token_url()
+    # start()
+    # testbench.run()
     cleanup.run()
 
 
